@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 
-export const usePromise = <T>(fn: () => Promise<T>): { result: T, error: unknown } => {
+export type PromiseResult<T> = { result: T; error: null } | { result: null; error: unknown };
+
+export const usePromise = <T>(fn: () => Promise<T>): PromiseResult<T> => {
     const [result, setResult] = useState();
     const [error, setError] = useState();
 
@@ -8,5 +10,9 @@ export const usePromise = <T>(fn: () => Promise<T>): { result: T, error: unknown
         fn().then(setResult, setError);
     });
 
-    return { result, error };
+    if (error != null) {
+        return { error, result: null };
+    } else {
+        return { result, error: null };
+    }
 };

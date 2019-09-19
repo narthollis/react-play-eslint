@@ -22,16 +22,16 @@ const SelectedThemeContext: React.Context<ThemeSelectorContext> = React.createCo
 export const SelectedThemeProvider: React.FunctionComponent = ({ children }) => {
     const [current, changeTheme] = useState<Themes>('Light');
 
-    const theme = usePromise(themes[current]);
+    const { result: theme, error } = usePromise(themes[current]);
 
     return (
         <SelectedThemeContext.Provider value={{ changeTheme, current }}>
-            {theme.result != null ? (
-                <ThemeProvider theme={theme.result}>
+            {theme != null ? (
+                <ThemeProvider theme={theme}>
                     <React.Fragment>{children}</React.Fragment>
                 </ThemeProvider>
             ) : (
-                <p>Error</p>
+                <p>Error: {`${error}`}</p>
             )}
         </SelectedThemeContext.Provider>
     );
