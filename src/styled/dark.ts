@@ -5,7 +5,7 @@ export const DarkTheme: DefaultTheme = {
         color: '#fff',
         background: '#343a40',
         hoverColor: '#ddd',
-        activeBackground: '#333',
+        activeBackground: '#222',
         size: '3rem',
         brandSize: '1.9rem',
         fontSize: '1.4rem',

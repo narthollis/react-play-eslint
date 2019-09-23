@@ -8,8 +8,8 @@ import { ThemeSelector } from 'src/style/SelectedThemeProvider';
 const PageHeader = styled.header`
     font-size: ${(p): string => p.theme.header.fontSize};
 
-    height: ${(p): string => p.theme.header.size};
-    flex: 0 0 ${(p): string => p.theme.header.size};
+    height: 3rem;
+    flex: 0 0 3rem;
     display: flex;
     flex-direction: row;
 
@@ -32,10 +32,11 @@ const PageHeader = styled.header`
     }
 
     a {
-        line-height: ${(p): string => p.theme.header.size};
+        line-height: 2.5rem;
         color: ${(p): string => p.theme.header.color};
         padding: 0 1rem;
-        margin: 0 0.25rem;
+        margin: 0.5rem 0.25rem 0;
+        border-radius: 0.4rem 0.4rem 0 0;
         white-space: nowrap;
 
         &:hover {

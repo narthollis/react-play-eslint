@@ -2,8 +2,8 @@ import { createGlobalStyle } from 'styled-components';
 
 export const BaseStyle = createGlobalStyle`
     :root {
-        background: ${p => p.theme.colors.background};
-        color: ${p => p.theme.colors.main};
+        background: ${(p): string => p.theme.colors.background};
+        color: ${(p): string => p.theme.colors.main};
     }
   
     html {
@@ -18,8 +18,8 @@ export const BaseStyle = createGlobalStyle`
         flex: 1 0 100%;
         flex-direction: column;
         min-height: 0;
-        background: ${p => p.theme.colors.background};
-        color: ${p => p.theme.colors.main};
+        background: ${(p): string => p.theme.colors.background};
+        color: ${(p): string => p.theme.colors.main};
     }
     
     h1 {
