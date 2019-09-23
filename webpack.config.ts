@@ -66,11 +66,11 @@ const config: webpack.Configuration & webpackDevServer.Configuration = {
             ignoreOrder: false, // Enable to remove warnings about conflicting order
         }),
     ],
+    devtool: 'eval-source-map',
     devServer: {
         historyApiFallback: {
             disableDotRule: true,
         },
-        hot: true,
     },
 };
 
