@@ -60,6 +60,9 @@ type UseReduxStoreReducer<S> = {
     prefix<A extends Action>(action: A): PrefixedAction<A>;
 };
 
+// TODO have this return a slice descriptor which can be used as the parameter to
+//  useSliceSelector<TSlice, TSelected>(slice, selector, equality): TSelected
+//  useSliceDispatch<TSlice>(slice): Dispatch
 export const useReduxReducer = <P extends string, S, A extends Action>(
     prefix: P,
     reducerCreator: (prefix: P) => Reducer<S, A>,
