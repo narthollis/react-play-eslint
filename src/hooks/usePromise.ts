@@ -7,8 +7,15 @@ export const usePromise = <T>(fn: () => Promise<T>): PromiseResult<T> => {
     const [error, setError] = useState();
 
     useEffect(() => {
-        fn().then(setResult, setError);
-    });
+        fn().then(
+            (v: T) => {
+                setResult(() => v);
+            },
+            (e: Error) => {
+                setError(() => e);
+            },
+        );
+    }, [fn]);
 
     if (error != null) {
         return { error, result: null };

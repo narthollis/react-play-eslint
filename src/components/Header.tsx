@@ -2,7 +2,7 @@ import React from 'react';
 
 import styled from 'styled-components';
 import { NavLink } from 'react-router-dom';
-import { def } from 'src/utilities';
+
 import { ThemeSelector } from 'src/style/SelectedThemeProvider';
 
 const PageHeader = styled.header`
@@ -40,8 +40,8 @@ const PageHeader = styled.header`
         white-space: nowrap;
 
         &:hover {
-            color: ${(p): string => def(p.theme.header.hoverColor, p.theme.header.color)};
-            background: ${(p): string => def(p.theme.header.hoverBackground, p.theme.header.background)};
+            color: ${(p): string => p.theme.header.hoverColor ?? p.theme.header.color};
+            background: ${(p): string => p.theme.header.hoverBackground ?? p.theme.header.background};
             text-decoration: none;
         }
 
@@ -50,8 +50,8 @@ const PageHeader = styled.header`
         }
 
         &.active {
-            color: ${(p): string => def(p.theme.header.activeColor, p.theme.header.color)};
-            background: ${(p): string => def(p.theme.header.activeBackground, p.theme.header.background)};
+            color: ${(p): string => p.theme.header.activeColor ?? p.theme.header.color};
+            background: ${(p): string => p.theme.header.activeBackground ?? p.theme.header.background};
         }
     }
 
@@ -71,14 +71,14 @@ const PageHeader = styled.header`
             cursor: pointer;
 
             &:hover {
-                color: ${(p): string => def(p.theme.header.hoverColor, p.theme.header.color)};
-                background: ${(p): string => def(p.theme.header.hoverBackground, p.theme.header.background)};
+                color: ${(p): string => p.theme.header.hoverColor ?? p.theme.header.color};
+                background: ${(p): string => p.theme.header.hoverBackground ?? p.theme.header.background};
                 text-decoration: none;
             }
 
             &.active {
-                color: ${(p): string => def(p.theme.header.activeColor, p.theme.header.color)};
-                background: ${(p): string => def(p.theme.header.activeBackground, p.theme.header.background)};
+                color: ${(p): string => p.theme.header.activeColor ?? p.theme.header.color};
+                background: ${(p): string => p.theme.header.activeBackground ?? p.theme.header.background};
             }
         }
     }

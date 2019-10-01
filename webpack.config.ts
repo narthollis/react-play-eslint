@@ -56,7 +56,7 @@ const config: webpack.Configuration & webpackDevServer.Configuration = {
         new webpack.HotModuleReplacementPlugin(),
         new ForkTsCheckerWebpackPlugin({
             tsconfig: path.resolve(__dirname, './tsconfig.json'),
-            eslint: true,
+            // eslint: true, // commented pending typescript-eslint/estree support for nullish collasce and nullish-optional operators
         }),
         new MiniCssExtractPlugin({
             // Options similar to the same options in webpackOptions.output

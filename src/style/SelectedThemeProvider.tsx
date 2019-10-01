@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { DefaultTheme, ThemeProvider } from 'styled-components';
-import { usePromise } from 'src/utilities/usePromise';
-import { useLocalStoreBackedState } from 'src/utilities/useLocalStoreageBackedState';
+import { usePromise } from 'src/hooks/usePromise';
+import { useLocalStoreBackedState } from 'src/hooks/useLocalStoreageBackedState';
 
 type Themes = 'Dark' | 'Light';
 
