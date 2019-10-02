@@ -4,7 +4,7 @@ import { useReduxReducer, useSliceDispatch, useSliceSelector } from 'src/hooks/u
 import { createThereReducer } from 'src/store/reducers/there';
 import { setA, setB } from 'src/store/actions/there';
 
-export const There: React.FunctionComponent = () => {
+export const SomewhereElse: React.FunctionComponent = () => {
     const slice = useReduxReducer('somewhere-else', createThereReducer);
 
     const a = useSliceSelector(slice, s => s.a);
@@ -16,9 +16,21 @@ export const There: React.FunctionComponent = () => {
         <main>
             <h1>Test Somewhere Else Dynamic</h1>
             <pre>A: {a}</pre>
-            <button onClick={() => dispatch(setA(Math.random().toFixed(4)))}>Update A</button>
+            <button
+                onClick={(): void => {
+                    dispatch(setA(Math.random().toFixed(4)));
+                }}
+            >
+                Update A
+            </button>
             <pre>B: {b}</pre>
-            <button onClick={() => dispatch(setB(Math.random()))}>Update B</button>
+            <button
+                onClick={(): void => {
+                    dispatch(setB(Math.random()));
+                }}
+            >
+                Update B
+            </button>
         </main>
     );
 };

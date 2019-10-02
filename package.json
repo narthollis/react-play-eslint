@@ -56,7 +56,7 @@
   "scripts": {
     "build": "cross-env TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack",
     "start": "cross-env TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack-dev-server",
-    "lint": "eslint src/**/* *.ts",
+    "lint": "eslint 'src/**' *.ts",
     "prettier": "prettier src/**/* --write"
   }
 }

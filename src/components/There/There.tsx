@@ -16,9 +16,21 @@ export const There: React.FunctionComponent = () => {
         <main>
             <h1>Test There Dynamic</h1>
             <pre>A: {a}</pre>
-            <button onClick={() => dispatch(setA(Math.random().toFixed(4)))}>Update A</button>
+            <button
+                onClick={(): void => {
+                    dispatch(setA(Math.random().toFixed(4)));
+                }}
+            >
+                Update A
+            </button>
             <pre>B: {b}</pre>
-            <button onClick={() => dispatch(setB(Math.random()))}>Update B</button>
+            <button
+                onClick={(): void => {
+                    dispatch(setB(Math.random()));
+                }}
+            >
+                Update B
+            </button>
         </main>
     );
 };
