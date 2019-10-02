@@ -1,39 +1,33 @@
-import { Action, Reducer } from 'redux';
-import { PrefixedAction } from 'src/hooks/useReduxStore';
+import { Reducer, Action } from 'redux';
+
+import { isPrefixedAction, PrefixedAction } from 'src/hooks/useReduxStore';
+import { setA, setB } from 'src/store/actions/there';
 
 interface ThereState {
     readonly a: string;
-    readonly b: string;
+    readonly b: number;
 }
 
-interface ThereStateSetAAction extends Action<'there-state-set-a'> {
-    payload: string;
-}
-
-interface ThereStateSetBAction extends Action<'there-state-set-b'> {
-    payload: string;
-}
-
-type ThereStateActions = PrefixedAction<ThereStateSetAAction> | PrefixedAction<ThereStateSetBAction>;
+type ThereStateActions = ReturnType<typeof setA> | ReturnType<typeof setB>;
 
 const INITIAL_STATE: ThereState = {
     a: 'initial',
-    b: 'initial',
+    b: NaN,
 };
 
 export function createThereReducer(prefix: string): Reducer<ThereState, ThereStateActions> {
-    return (state: ThereState = INITIAL_STATE, action: ThereStateActions): ThereState => {
-        if (action.prefix !== prefix) {
+    return (state = INITIAL_STATE, action: PrefixedAction<ThereStateActions> | Action): ThereState => {
+        if (!isPrefixedAction(action) || action.prefix !== prefix) {
             return state;
         }
 
         switch (action.type) {
-            case 'there-state-set-a':
+            case setA.toString():
                 return {
                     ...state,
                     a: action.payload,
                 };
-            case 'there-state-set-b':
+            case setB.toString():
                 return {
                     ...state,
                     b: action.payload,

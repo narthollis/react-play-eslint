@@ -1,30 +1,27 @@
 import { useContext, useState } from 'react';
 
-import { Action, ActionCreator, combineReducers, createStore, Reducer, Store } from 'redux';
+import { Action, combineReducers, createStore, Reducer, Store } from 'redux';
 import { devToolsEnhancer } from 'redux-devtools-extension';
-import { ReactReduxContext, useSelector } from 'react-redux';
+import { ReactReduxContext, useDispatch, useSelector } from 'react-redux';
+
+import { createActionCreator } from 'src/store/createActionCreator';
 
 export interface DynamicStore<TStore extends { [key: string]: unknown } = { [key: string]: unknown }> {
     store: TStore;
-    reducers: { [K in keyof TStore]: Reducer<TStore[K], Action> };
+    reducers: { [K in keyof TStore]: Reducer<TStore[K]> };
 }
 
-interface AddReducerAction extends Action<'DYNAMIC_STORE_ADD_REDUCER'> {
-    reducer: Reducer<unknown, Action>;
-    prefix: string;
-}
-const addReducer: ActionCreator<AddReducerAction> = (prefix: string, reducer: Reducer<unknown, Action>) => ({
-    type: 'DYNAMIC_STORE_ADD_REDUCER',
+const addReducer = createActionCreator('@@DYNAMIC_STORE_ADD_REDUCER', (prefix: string, reducer: Reducer) => ({
     prefix,
     reducer,
-});
+}));
 
-type ReducerCacheState = { [key: string]: Reducer<unknown, Action> };
-function reducerCacheReducer(state: ReducerCacheState = {}, action: AddReducerAction): ReducerCacheState {
-    if (action.type === 'DYNAMIC_STORE_ADD_REDUCER') {
+type ReducerCacheState = { [key: string]: Reducer };
+function reducerCacheReducer(state: ReducerCacheState = {}, action: ReturnType<typeof addReducer>): ReducerCacheState {
+    if (action.type === addReducer.toString()) {
         return {
             ...state,
-            [action.prefix]: action.reducer,
+            [action.payload.prefix]: action.payload.reducer,
         };
     }
 
@@ -46,30 +43,21 @@ export const useReduxStore = <TStore extends { [key: string]: unknown }>(): Stor
     return store;
 };
 
-export type StoreWithSlice<P extends string, S> = { [K in P]: S };
+export type StoreSlice<P extends string, S> = { [K in P]: S };
 
-export type PrefixedAction<A extends Action, P extends string = string> = A & { prefix: P };
-
-type TypedUseSelector<S> = <TSelected>(
-    selector: (state: S) => TSelected,
-    equalityFn?: (left: TSelected, right: TSelected) => boolean,
-) => TSelected;
-
-type UseReduxStoreReducer<S> = {
-    useSelectorInSlice: TypedUseSelector<S>;
-    prefix<A extends Action>(action: A): PrefixedAction<A>;
+export type SliceDescriptor<P, S, A extends Action> = {
+    readonly prefix: P;
+    readonly __VIRTUAL__store?: S;
+    readonly __VIRTUAL__action?: A;
 };
 
-// TODO have this return a slice descriptor which can be used as the parameter to
-//  useSliceSelector<TSlice, TSelected>(slice, selector, equality): TSelected
-//  useSliceDispatch<TSlice>(slice): Dispatch
 export const useReduxReducer = <P extends string, S, A extends Action>(
     prefix: P,
     reducerCreator: (prefix: P) => Reducer<S, A>,
-): UseReduxStoreReducer<S> => {
+): SliceDescriptor<P, S, A> => {
     const { store } = useContext(ReactReduxContext);
 
-    const state: DynamicStore<StoreWithSlice<P, S>> = store.getState();
+    const state: DynamicStore<StoreSlice<P, S>> = store.getState();
     if (state.reducers[prefix] == null) {
         const reducer = reducerCreator(prefix);
 
@@ -85,23 +73,35 @@ export const useReduxReducer = <P extends string, S, A extends Action>(
             }),
         );
 
-        store.dispatch(addReducer(prefix, reducer));
-    } else {
-        console.info('reduce already loaded, not bothering to do anything');
+        store.dispatch(addReducer(prefix, reducer as Reducer<S>));
     }
 
-    return {
-        useSelectorInSlice<TSelected>(
-            selector: (state: S) => TSelected,
-            equalityFn?: (left: TSelected, right: TSelected) => boolean,
-        ): TSelected {
-            return useSelector<DynamicStore<StoreWithSlice<P, S>>, TSelected>(
-                (s: DynamicStore<StoreWithSlice<P, S>>) => selector(s.store[prefix]),
-                equalityFn,
-            );
-        },
-        prefix<A extends Action>(action: A): PrefixedAction<A> {
-            return { ...action, prefix: prefix };
-        },
-    };
+    return { prefix };
 };
+
+export const useSliceSelector = <P extends string, TSlice, TSelected, A extends Action>(
+    sliceDescriptor: SliceDescriptor<P, TSlice, A>,
+    selector: (slice: TSlice) => TSelected,
+    equalityFn?: (left: TSelected, right: TSelected) => boolean,
+): TSelected => {
+    return useSelector<DynamicStore<StoreSlice<P, TSlice>>, TSelected>(
+        (s: DynamicStore<StoreSlice<P, TSlice>>) => selector(s.store[sliceDescriptor.prefix]),
+        equalityFn,
+    );
+};
+
+export type PrefixedAction<A extends Action, P extends string = string> = A & { prefix: P };
+export const useSliceDispatch = <P extends string, TSlice, A extends Action>(
+    sliceDescriptor: SliceDescriptor<P, TSlice, A>,
+): ((action: A) => PrefixedAction<A, P>) => {
+    const dispatch = useDispatch();
+
+    return (a: A): PrefixedAction<A, P> =>
+        dispatch({
+            ...a,
+            prefix: sliceDescriptor.prefix,
+        });
+};
+export function isPrefixedAction<A extends Action>(a: A): a is PrefixedAction<A> {
+    return typeof (a as PrefixedAction<A>).prefix === 'string';
+}
