@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 
-export type PromiseResult<T> = { result: T; error: null } | { result: null; error: unknown };
+export type PromiseResult<T> =
+    | { result: T; error: null; loading: false }
+    | { result: null; error: Error; loading: false }
+    | { result: null; error: null; loading: true };
 
 export const usePromise = <T>(fn: () => Promise<T>): PromiseResult<T> => {
     const [result, setResult] = useState();
@@ -15,11 +18,18 @@ export const usePromise = <T>(fn: () => Promise<T>): PromiseResult<T> => {
                 setError(() => e);
             },
         );
+
+        return (): void => {
+            setResult(undefined);
+            setError(undefined);
+        };
     }, [fn]);
 
     if (error != null) {
-        return { error, result: null };
+        return { error, result: null, loading: false };
+    } else if (result != null) {
+        return { result, error: null, loading: false };
     } else {
-        return { result, error: null };
+        return { result: null, error: null, loading: true };
     }
 };

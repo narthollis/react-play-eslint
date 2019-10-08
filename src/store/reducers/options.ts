@@ -20,7 +20,7 @@ const INITIAL_STATE: OptionsState = {
 
 type OptionsActions = ReturnType<typeof setTheme> | ReturnType<typeof resetTheme>;
 
-export function createOptionsReducer(prefix: 'options'): Reducer<OptionsState> {
+export function createOptionsReducer(...prefix: ['options']): Reducer<OptionsState> {
     const themeFromLocalStorage = window.localStorage.getItem('options.theme');
 
     const initialState: OptionsState = {
@@ -28,7 +28,7 @@ export function createOptionsReducer(prefix: 'options'): Reducer<OptionsState> {
     };
 
     return (state = initialState, action: PrefixedAction<OptionsActions> | Action): OptionsState => {
-        if (!isPrefixedAction(action) || action.prefix !== prefix) {
+        if (!isPrefixedAction(action) || action.prefix.join('.') !== prefix.join('.')) {
             return state;
         }
 

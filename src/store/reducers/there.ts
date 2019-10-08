@@ -15,9 +15,13 @@ const INITIAL_STATE: ThereState = {
     b: NaN,
 };
 
-export function createThereReducer(prefix: string): Reducer<ThereState, ThereStateActions> {
+export function createThereReducer(...prefix: ReadonlyArray<string>): Reducer<ThereState, ThereStateActions> {
     return (state = INITIAL_STATE, action: PrefixedAction<ThereStateActions> | Action): ThereState => {
-        if (!isPrefixedAction(action) || action.prefix !== prefix) {
+        if (!isPrefixedAction(action)) {
+            return state;
+        }
+
+        if (action.prefix.join('.') !== prefix.join('.')) {
             return state;
         }
 

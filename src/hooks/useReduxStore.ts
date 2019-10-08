@@ -1,28 +1,65 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 
-import { Action, combineReducers, createStore, Reducer, Store } from 'redux';
+import { Action, combineReducers, createStore, Reducer, Store, ReducersMapObject } from 'redux';
 import { devToolsEnhancer } from 'redux-devtools-extension';
-import { ReactReduxContext, useDispatch, useSelector } from 'react-redux';
+import { ReactReduxContext, ReactReduxContextValue, useDispatch, useSelector } from 'react-redux';
 
 import { createActionCreator } from 'src/store/createActionCreator';
 
-export interface DynamicStore<TStore extends { [key: string]: unknown } = { [key: string]: unknown }> {
+type RecursiveReducersMapObject = { [key: string]: Reducer | RecursiveReducersMapObject };
+export interface DynamicStore<TStore = unknown> {
     store: TStore;
-    reducers: { [K in keyof TStore]: Reducer<TStore[K]> };
+    reducers: RecursiveReducersMapObject;
 }
 
-const addReducer = createActionCreator('@@DYNAMIC_STORE_ADD_REDUCER', (prefix: string, reducer: Reducer) => ({
-    prefix,
-    reducer,
-}));
+const addReducer = createActionCreator(
+    '@@DYNAMIC_STORE_ADD_REDUCER',
+    (reducer: Reducer, ...prefix: ReadonlyArray<string>) => ({
+        prefix,
+        reducer,
+    }),
+);
+const removeReducer = createActionCreator(
+    '@@DYNAMIC_STORE_REMOVE_REDUCER',
+    (reducer: Reducer, ...prefix: ReadonlyArray<string>) => ({
+        prefix,
+        reducer,
+    }),
+);
 
-type ReducerCacheState = { [key: string]: Reducer };
-function reducerCacheReducer(state: ReducerCacheState = {}, action: ReturnType<typeof addReducer>): ReducerCacheState {
+function getAtPath(obj: object, ...path: ReadonlyArray<string>): unknown {
+    return path.reduce(
+        (o: object | undefined, p) => (typeof o === 'object' ? (o as { [k: string]: object })[p] : undefined),
+        obj,
+    );
+}
+function imutSetAtPath(
+    obj: RecursiveReducersMapObject,
+    val: Reducer,
+    ...path: ReadonlyArray<string>
+): RecursiveReducersMapObject {
+    const next = { ...obj };
+    let seg: { [k: string]: object } = next;
+    for (const p of path.slice(0, -1)) {
+        seg = seg[p] = { ...seg[p] };
+    }
+
+    seg[path.slice(-1)[0]] = val;
+
+    return next;
+}
+
+function reducerCacheReducer(
+    state: RecursiveReducersMapObject = {},
+    action: ReturnType<typeof addReducer> | ReturnType<typeof removeReducer>,
+): RecursiveReducersMapObject {
     if (action.type === addReducer.toString()) {
-        return {
-            ...state,
-            [action.payload.prefix]: action.payload.reducer,
-        };
+        const current = getAtPath(state, ...action.payload.prefix);
+        if (current == null) {
+            return imutSetAtPath(state, action.payload.reducer, ...action.payload.prefix);
+        }
+
+        return state;
     }
 
     return state;
@@ -43,55 +80,85 @@ export const useReduxStore = <TStore extends { [key: string]: unknown }>(): Stor
     return store;
 };
 
-export type StoreSlice<P extends string, S> = { [K in P]: S };
+export type StoreSlice<P extends ReadonlyArray<string>, S> = { [K in P[0]]: S };
 
-export type SliceDescriptor<P, S, A extends Action> = {
+export type SliceDescriptor<P extends ReadonlyArray<string>, S, A extends Action> = {
     readonly prefix: P;
     readonly __VIRTUAL__store?: S;
     readonly __VIRTUAL__action?: A;
 };
 
-export const useReduxReducer = <P extends string, S, A extends Action>(
-    prefix: P,
-    reducerCreator: (prefix: P) => Reducer<S, A>,
-): SliceDescriptor<P, S, A> => {
-    const { store } = useContext(ReactReduxContext);
-
-    const state: DynamicStore<StoreSlice<P, S>> = store.getState();
-    if (state.reducers[prefix] == null) {
-        const reducer = reducerCreator(prefix);
-
-        const nextReducers = {
-            ...state.reducers,
-            [prefix]: reducer,
-        };
-
-        store.replaceReducer(
-            combineReducers({
-                store: combineReducers(nextReducers),
-                reducers: reducerCacheReducer,
-            }),
-        );
-
-        store.dispatch(addReducer(prefix, reducer as Reducer<S>));
+const recurseCombineReducers = (reducers: RecursiveReducersMapObject): Reducer => {
+    const r: ReducersMapObject = {};
+    for (const [key, value] of Object.entries(reducers)) {
+        r[key] = typeof value === 'function' ? value : recurseCombineReducers(value);
     }
+
+    return combineReducers(r);
+};
+
+export const useReduxReducer = <P extends ReadonlyArray<string>, S, A extends Action>(
+    reducerCreator: (...prefix: P) => Reducer<S, A>,
+    ...prefix: P
+): SliceDescriptor<P, S, A> => {
+    const { store } = useContext<ReactReduxContextValue<DynamicStore>>(ReactReduxContext);
+
+    const reducer = useMemo(() => reducerCreator(...prefix), [reducerCreator, prefix]);
+
+    useEffect(() => {
+        const prevReducers = store.getState().reducers;
+
+        store.dispatch(addReducer(reducer as Reducer<S>, ...prefix));
+
+        const nextReducers = store.getState().reducers;
+
+        if (prevReducers !== nextReducers) {
+            console.log(...prefix, { eq: prevReducers === nextReducers, nextReducers });
+            store.replaceReducer(
+                combineReducers<DynamicStore>({
+                    store: recurseCombineReducers(nextReducers),
+                    reducers: reducerCacheReducer,
+                }),
+            );
+        }
+
+        return (): void => {
+            const prevReducers = store.getState().reducers;
+
+            const reducer = reducerCreator(...prefix);
+            store.dispatch(removeReducer(reducer as Reducer<S>, ...prefix));
+
+            const nextReducers = store.getState().reducers;
+
+            if (prevReducers !== nextReducers) {
+                store.replaceReducer(
+                    combineReducers({
+                        store: recurseCombineReducers(nextReducers),
+                        reducers: reducerCacheReducer,
+                    }),
+                );
+            }
+        };
+    }, [...prefix]);
 
     return { prefix };
 };
 
-export const useSliceSelector = <P extends string, TSlice, TSelected, A extends Action>(
+export const useSliceSelector = <P extends ReadonlyArray<string>, TSlice, TSelected, A extends Action>(
     sliceDescriptor: SliceDescriptor<P, TSlice, A>,
-    selector: (slice: TSlice) => TSelected,
-    equalityFn?: (left: TSelected, right: TSelected) => boolean,
-): TSelected => {
-    return useSelector<DynamicStore<StoreSlice<P, TSlice>>, TSelected>(
-        (s: DynamicStore<StoreSlice<P, TSlice>>) => selector(s.store[sliceDescriptor.prefix]),
+    selector: (slice?: TSlice) => TSelected | undefined,
+    equalityFn?: (left?: TSelected, right?: TSelected) => boolean,
+): TSelected | undefined => {
+    return useSelector<DynamicStore<StoreSlice<P, TSlice>>, TSelected | undefined>(
+        (s: DynamicStore<StoreSlice<P, TSlice>>) => selector(getAtPath(s.store, ...sliceDescriptor.prefix) as TSlice),
         equalityFn,
     );
 };
 
-export type PrefixedAction<A extends Action, P extends string = string> = A & { prefix: P };
-export const useSliceDispatch = <P extends string, TSlice, A extends Action>(
+export type PrefixedAction<A extends Action, P extends ReadonlyArray<string> = ReadonlyArray<string>> = A & {
+    prefix: P;
+};
+export const useSliceDispatch = <P extends ReadonlyArray<string>, TSlice, A extends Action>(
     sliceDescriptor: SliceDescriptor<P, TSlice, A>,
 ): ((action: A) => PrefixedAction<A, P>) => {
     const dispatch = useDispatch();
@@ -102,6 +169,7 @@ export const useSliceDispatch = <P extends string, TSlice, A extends Action>(
             prefix: sliceDescriptor.prefix,
         });
 };
+
 export function isPrefixedAction<A extends Action>(a: A): a is PrefixedAction<A> {
-    return typeof (a as PrefixedAction<A>).prefix === 'string';
+    return Array.isArray((a as PrefixedAction<A>).prefix);
 }
