@@ -25,23 +25,25 @@ const MainComponent: React.FunctionComponent = () => {
                     <BaseStyle />
                     <Header />
                     <main>
-                        <Switch>
-                            <Route path="/here">
-                                <h1>Here</h1>
-                            </Route>
-                            <Route path="/there">
-                                <ThereLoader />
-                            </Route>
-                            <Route path="/everywhere">
-                                <Everywhere />
-                            </Route>
-                            <Route path="/somewhere-else">
-                                <SomewhereElseLoader />
-                            </Route>
-                            <Route>
-                                <h1>Page Not Found</h1>
-                            </Route>
-                        </Switch>
+                        <React.Suspense fallback={<h1>Loading...</h1>}>
+                            <Switch>
+                                <Route path="/here">
+                                    <h1>Here</h1>
+                                </Route>
+                                <Route path="/there">
+                                    <ThereLoader />
+                                </Route>
+                                <Route path="/everywhere">
+                                    <Everywhere />
+                                </Route>
+                                <Route path="/somewhere-else">
+                                    <SomewhereElseLoader />
+                                </Route>
+                                <Route>
+                                    <h1>Page Not Found</h1>
+                                </Route>
+                            </Switch>
+                        </React.Suspense>
                     </main>
                 </SelectedThemeProvider>
             </BrowserRouter>

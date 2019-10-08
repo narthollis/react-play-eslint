@@ -1,18 +1,5 @@
-import React from 'react';
-import { usePromise } from 'src/hooks/usePromise';
+import { makeAsyncComponent } from 'src/components/makeAsyncComponent';
 
-export const SomewhereElseLoader: React.FunctionComponent = () => {
-    const { result: ActualThere, error } = usePromise(
-        async () => (await import('src/components/SomewhereElse/SomewhereElse')).SomewhereElse,
-    );
-
-    if (error != null) {
-        return <p>Error</p>;
-    }
-
-    if (ActualThere == null) {
-        return <p>Loading...</p>;
-    }
-
-    return <ActualThere />;
-};
+export const SomewhereElseLoader = makeAsyncComponent(
+    async () => (await import('src/components/SomewhereElse/SomewhereElse')).SomewhereElse,
+);

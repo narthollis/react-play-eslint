@@ -1,16 +1,3 @@
-import React from 'react';
-import { usePromise } from 'src/hooks/usePromise';
+import { makeAsyncComponent } from 'src/components/makeAsyncComponent';
 
-export const ThereLoader: React.FunctionComponent = () => {
-    const { result: ActualThere, error } = usePromise(async () => (await import('./There')).There);
-
-    if (error != null) {
-        return <p>Error</p>;
-    }
-
-    if (ActualThere == null) {
-        return <p>Loading...</p>;
-    }
-
-    return <ActualThere />;
-};
+export const ThereLoader = makeAsyncComponent(async () => (await import('src/components/There/There')).There);

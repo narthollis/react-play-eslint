@@ -5,10 +5,10 @@ import { createThereReducer } from 'src/store/reducers/there';
 import { setA, setB } from 'src/store/actions/there';
 
 export const SomewhereElse: React.FunctionComponent = () => {
-    const slice = useReduxReducer('somewhere-else', createThereReducer);
+    const slice = useReduxReducer(createThereReducer, 'somewhere-else');
 
-    const a = useSliceSelector(slice, s => s.a);
-    const b = useSliceSelector(slice, s => s.b);
+    const a = useSliceSelector(slice, s => s?.a);
+    const b = useSliceSelector(slice, s => s?.b);
 
     const dispatch = useSliceDispatch(slice);
 
