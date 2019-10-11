@@ -21,6 +21,8 @@ export const SelectedThemeProvider: React.FunctionComponent = ({ children }) => 
     useEffect(() => {
         if (currentTheme != null) {
             window.localStorage.setItem('options.theme', currentTheme);
+        } else {
+            window.localStorage.removeItem('options.theme');
         }
     }, [currentTheme]);
 

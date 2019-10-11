@@ -16,21 +16,9 @@ export const SomewhereElse: React.FunctionComponent = () => {
         <main>
             <h1>Test Somewhere Else Dynamic</h1>
             <pre>A: {a}</pre>
-            <button
-                onClick={(): void => {
-                    dispatch(setA(Math.random().toFixed(4)));
-                }}
-            >
-                Update A
-            </button>
+            <button onClick={(): unknown => dispatch(setA(Math.random().toFixed(4)))}>Update A</button>
             <pre>B: {b}</pre>
-            <button
-                onClick={(): void => {
-                    dispatch(setB(Math.random()));
-                }}
-            >
-                Update B
-            </button>
+            <button onClick={(): unknown => dispatch(setB(Math.random()))}>Update B</button>
         </main>
     );
 };

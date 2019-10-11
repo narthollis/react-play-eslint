@@ -113,7 +113,6 @@ export const useReduxReducer = <P extends ReadonlyArray<string>, S, A extends Ac
         const nextReducers = store.getState().reducers;
 
         if (prevReducers !== nextReducers) {
-            console.log(...prefix, { eq: prevReducers === nextReducers, nextReducers });
             store.replaceReducer(
                 combineReducers<DynamicStore>({
                     store: recurseCombineReducers(nextReducers),
